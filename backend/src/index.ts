@@ -1,21 +1,20 @@
 import express from 'express';
 import mongoose from 'mongoose';
+import authRoutes from './routes/authRoutes';
 import dotenv from 'dotenv';
-import {connect} from './config/db';
-import cookieParser from 'cookie-parser';
-import userRoutes from './routes/userRoutes';
 
 dotenv.config();
-const app = express();
-connect();
 
+const app = express();
 
 app.use(express.json());
-app.use(cookieParser());
 
-app.use('/api/signup',userRoutes);
+app.use('/api',authRoutes);
 
+mongoose.connect(process.env.MONGODB_URI as string).then(()=>console.log('connected to MongoDb')).catch(err=>console.error('mongodb connection error',err));
 
-app.listen(3000,()=>{
-    console.log('server is running on port 3000');
-})
+const PORT = process.env.PORT||3000;
+
+app.listen(PORT,()=>{
+    console.log(`server running on port ${PORT}`);
+});
