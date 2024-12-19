@@ -2,7 +2,11 @@ import { Request, Response } from "express";
 import jwt from 'jsonwebtoken';
 import { User } from "../models/user";
 
-const JWT_SECRET = process.env.JWT_SECRET || "";
+const JWT_SECRET = "vansh"
+
+if (!JWT_SECRET) {
+    console.log('JWT_SECRET environment variable is not set');
+}
 export const signup = async (req: Request, res: Response): Promise<void> => {
     try {
         console.log('Signup request received');

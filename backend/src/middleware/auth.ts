@@ -4,26 +4,22 @@ import { AuthRequest } from '../definitions/interfaces';
 
 const JWT_SECRET = process.env.JWT_SECRET || "";
 
-export const authenticateToken = async(
-    req:AuthRequest,
-    res:Response,
-    next:NextFunction
-):Promise<void> =>{
-    try{
-        const authHeader = req.headers.authorization;
-        const token = authHeader?.split(' ')[1];
-
-        if(!token){
-            res.status(401).json({message:'Authentication required'});
-            return;
-        }
-
-        const decoded = jwt.verify(token,JWT_SECRET) as {userId:string};
-        req.userId = decoded.userId;
+export const authenticateToken = (
+    req: Request, 
+    res: Response, 
+    next: NextFunction
+  ): void => {
+    // Example: decoding JWT token and adding userId
+    const token = req.headers.authorization?.split(' ')[1]; // Assuming Bearer token
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
+        req.userId = (decoded as any).userId; // Add userId to req
         next();
-    }catch(error){
-        res.status(403).json({message:'Invalid token'});
+      } catch (err) {
+        res.status(401).json({ message: "Unauthorized" });
+      }
+    } else {
+      res.status(401).json({ message: "No token provided" });
     }
-
-
-}
+  };
