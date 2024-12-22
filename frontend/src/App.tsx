@@ -1,10 +1,10 @@
-import {Button} from '@/components/ui/button'
+import { LoginForm } from './components/auth/LoginForm'
 function App() {
 
   return (
-    <>
-     <Button>Click me</Button>
-    </>
+    <div>
+      <LoginForm/>
+    </div>
   )
 }
 
