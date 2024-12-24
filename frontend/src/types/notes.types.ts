@@ -11,4 +11,5 @@ export interface NotesState{
     isLoading:boolean;
     error:string|null;
     currentNote:Note|null;
+    isEditing:boolean;
 }
