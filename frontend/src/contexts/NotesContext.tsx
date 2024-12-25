@@ -20,7 +20,36 @@ type NotesAction =
     |{type:'SET_ERROR',payload:string};
 
 const initialState:NotesState = {
-    notes:[],
+    notes:[
+        {
+            id: "1a2b3c",
+            title: "Introduction to JavaScript",
+            content: "JavaScript is a versatile programming language used for web development, game development, and more.",
+            createdAt: "2024-12-01T10:45:30Z",
+            userId: "user123",
+          },
+          {
+            id: "4d5e6f",
+            title: "Understanding React",
+            content: "React is a JavaScript library for building user interfaces. It allows developers to create reusable components.",
+            createdAt: "2024-12-02T15:12:10Z",
+            userId: "user456",
+          },
+          {
+            id: "7g8h9i",
+            title: "CSS Basics",
+            content: "CSS, or Cascading Style Sheets, is used to style web pages. It provides control over layout, colors, fonts, and more.",
+            createdAt: "2024-12-03T09:00:00Z",
+            userId: "user789",
+          },
+          {
+            id: "0j1k2l",
+            title: "Node.js Overview",
+            content: "Node.js is a runtime that allows developers to run JavaScript on the server. It's great for building scalable applications.",
+            createdAt: "2024-12-04T18:30:45Z",
+            userId: "user101",
+          }
+    ],
     isLoading:false,
     error:null,
     currentNote:null,
