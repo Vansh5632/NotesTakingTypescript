@@ -9,7 +9,7 @@ import HomePage from './components/HomePage';
 import { useAuth } from './contexts/AuthContext';
 const App = () => {
   return (
-    <BrowserRouter>
+    
       <AuthProvider>
         <NotesProvider>
           <Routes>
@@ -27,7 +27,6 @@ const App = () => {
           </Routes>
         </NotesProvider>
       </AuthProvider>
-    </BrowserRouter>
   );
 };
 

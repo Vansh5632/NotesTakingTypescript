@@ -1,95 +1,59 @@
-import {createContext,useContext,useReducer,useCallback} from 'react';
-import { AuthState,User } from '../types/auth.types';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { User } from '../types/auth.types';
+import { authService } from '../services/auth.service';
+import { useNavigate } from 'react-router-dom';
 
-interface AuthContextType extends AuthState{
-    login:(email:string,password:string)=>Promise<void>;
-    register:(email:string,password:string)=>Promise<void>;
-    logout:()=>void;
-}
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-type AuthAction =
-    |{type:'AUTH_START'}
-    |{type:'AUTH_SUCCESS',payload:User}
-    |{type:'AUTH_FAILURE',payload:string}
-    |{type:'LOGOUT'};
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-const initialState:AuthState = {
-    user:null,
-    isAuthenticated:false,
-    isLoading:false,
-    error:null
-}
-const authReducer = (state:AuthState,action:AuthAction):AuthState=>{
-    switch(action.type){
-        case 'AUTH_START':
-            return {
-                ...state,
-                isLoading:true,
-                error:null
-            }
-        case 'AUTH_SUCCESS':
-            return {
-                ...state,
-                user:action.payload,
-                isAuthenticated:true,
-                isLoading:false,
-                error:null
-            }
-        case 'AUTH_FAILURE':
-            return {
-                ...state,
-                isLoading:false,
-                error:action.payload
-            }
-        case 'LOGOUT':
-            return {
-                ...state,
-                user:null,
-                isAuthenticated:false
-            }
-        default:
-            return state;
+  useEffect(() => {
+    const initAuth = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const user = await authService.getCurrentUser();
+          setUser(user);
+        } catch (error) {
+          localStorage.removeItem('token');
+        }
+      }
+      setIsLoading(false);
+    };
+
+    initAuth();
+  }, []);
+
+  const login = useCallback(async (email: string, password: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const user = await authService.login(email, password);
+      setUser(user);
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      throw err;
+    } finally {
+      setIsLoading(false);
     }
-}
+  }, [navigate]);
 
-const AuthContext = createContext<AuthContextType|undefined>(undefined);
+  const logout = useCallback(async () => {
+    await authService.logout();
+    setUser(null);
+    navigate('/login');
+  }, [navigate]);
 
-export const AuthProvider:React.FC<{children:React.ReactNode}> = ({children})=>{
-    const [state,dispacth] = useReducer(authReducer,initialState);
-
-    const login = useCallback(async (email:string,password:string)=>{
-        try{
-            dispacth({type:'AUTH_START'});
-            await new Promise((resolve)=>setTimeout(resolve,1000));
-            const user:User = {id:'1',email};
-            localStorage.setItem('user',JSON.stringify(user));
-            dispacth({type:'AUTH_SUCCESS',payload:user});
-        }catch(err){
-            dispacth({type:'AUTH_FAILURE',payload:err.message});
-        }
-    },[]);
-
-    const register = useCallback(async (email:string,password:string)=>{
-        try{
-            dispacth({type:'AUTH_START'});
-            await new Promise((resolve)=>setTimeout(resolve,1000));
-            const user:User = {id:'1',email};
-            localStorage.setItem('user',JSON.stringify(user));
-            dispacth({type:'AUTH_SUCCESS',payload:user});
-        }catch(err){
-            dispacth({type:'AUTH_FAILURE',payload:err.message});
-        }
-    },[]);
-    const logout = useCallback(()=>{
-        localStorage.removeItem('user');
-        dispacth({type:'LOGOUT'});
-    },[]);
-
-    return (
-        <AuthContext.Provider value={{...state,login,register,logout}}>
-            {children}
-        </AuthContext.Provider>
-    );
+  return (
+    <AuthContext.Provider value={{ user, login, logout, isLoading, error }}>
+      {!isLoading && children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = ()=>{
