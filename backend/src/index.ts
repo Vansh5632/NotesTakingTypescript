@@ -13,16 +13,20 @@ const app = express();
 
 // Middleware
 app.use(cookieParser());
-app.use(cors());
-app.use(helmet());
+
 app.use(express.json());
 
+// CORS configuration
 app.use(cors({
-    origin: 'http://localhost:3000', // Your frontend URL
-    credentials: true,  // Important for cookies
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-  }));
+  origin: 'http://localhost:5173',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['set-cookie']
+}));
+
+// Enable pre-flight requests for all routes
+
 
 // Routes
 app.use('/api/notes', noteRoutes);
@@ -33,7 +37,7 @@ mongoose.connect(process.env.MONGODB_URI!)
   .then(() => console.log('Connected to MongoDB'))
   .catch((error) => console.error('MongoDB connection error:', error));
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000; // Changed to 3000 to match your fetch URL
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

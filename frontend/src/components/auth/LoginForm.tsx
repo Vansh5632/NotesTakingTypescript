@@ -4,26 +4,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext"; // Adjust path as per your folder structure
 
 export const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [focusedField, setFocusedField] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const { login, isLoading, error } = useAuth();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    // Simulate login attempt
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      // Add your actual login logic here
+      await login(email, password); // Use login from AuthContext
     } catch (err) {
-      setError("Invalid credentials");
-    } finally {
-      setIsLoading(false);
+      console.error("Login failed:", err);
     }
   };
 
@@ -33,14 +28,10 @@ export const LoginForm = () => {
         <div className="flex flex-col md:flex-row bg-white rounded-2xl shadow-2xl overflow-hidden">
           {/* Branding Section */}
           <div className="relative hidden md:flex flex-col justify-center items-center w-1/2 p-12 bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 text-white overflow-hidden">
-            {/* Animated background patterns */}
             <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full filter blur-3xl animate-pulse" 
-                   style={{ animation: 'pulse 4s infinite' }} />
-              <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-400 rounded-full filter blur-3xl animate-pulse" 
-                   style={{ animation: 'pulse 4s infinite 2s' }} />
+              <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full filter blur-3xl animate-pulse" />
+              <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-400 rounded-full filter blur-3xl animate-pulse" />
             </div>
-            
             <div className="relative z-10 text-center space-y-6">
               <div className="w-24 h-24 mx-auto bg-white/20 rounded-2xl backdrop-blur-sm p-4 transform transition-transform hover:scale-110">
                 <img src="/api/placeholder/96/96" alt="Logo" className="w-full h-full object-contain" />
@@ -118,8 +109,6 @@ export const LoginForm = () => {
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
                     </div>
-                    
-                    {/* Forgot Password Link */}
                     <div className="flex justify-end">
                       <a href="#" className="text-sm text-indigo-600 hover:text-indigo-500 transition-colors">
                         Forgot password?
@@ -142,11 +131,9 @@ export const LoginForm = () => {
                       "Sign In"
                     )}
                   </Button>
-
-                  {/* Sign up link */}
                   <p className="text-center text-gray-600">
                     Don't have an account?{' '}
-                    <a href="#" className="text-indigo-600 hover:text-indigo-500 font-semibold">
+                    <a href="/register" className="text-indigo-600 hover:text-indigo-500 font-semibold">
                       Sign up
                     </a>
                   </p>

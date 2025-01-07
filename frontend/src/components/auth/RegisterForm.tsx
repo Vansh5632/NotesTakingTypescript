@@ -182,7 +182,7 @@ export const RegisterForm = () => {
                   {/* Sign in link */}
                   <p className="text-center text-gray-600">
                     Already have an account?{' '}
-                    <a href="#" className="text-indigo-600 hover:text-indigo-500 font-semibold">
+                    <a href="/login" className="text-indigo-600 hover:text-indigo-500 font-semibold">
                       Sign in
                     </a>
                   </p>
