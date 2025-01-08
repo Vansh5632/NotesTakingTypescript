@@ -17,21 +17,27 @@ export const NoteForm: React.FC = () => {
 
     useEffect(() => {
         if (currentNote && isEditing) {
+            console.log('Editing note:', currentNote);
             setTitle(currentNote.title);
             setContent(currentNote.content);
         }
     }, [currentNote, isEditing]);
 
     const handleSubmit = () => {
-        if (!user) return;
+        if (!user) {
+            console.log('No user found');
+            return;
+        }
 
         if (isEditing && currentNote) {
+            console.log('Updating note:', currentNote);
             updateNote({
                 ...currentNote,
                 title,
                 content,
             });
         } else {
+            console.log('Adding new note');
             addNote({
                 title,
                 content,
@@ -39,6 +45,7 @@ export const NoteForm: React.FC = () => {
             });
         }
 
+        console.log('Resetting form');
         setTitle('');
         setContent('');
         setIsEditing(false);
@@ -46,6 +53,7 @@ export const NoteForm: React.FC = () => {
     };
 
     const handleCancel = () => {
+        console.log('Cancelling edit');
         setIsEditing(false);
         setCurrentNote(null);
         setTitle('');
@@ -73,7 +81,10 @@ export const NoteForm: React.FC = () => {
                         <label className="block text-sm font-medium text-gray-600 mb-1">Title</label>
                         <Input
                             value={title}
-                            onChange={(e) => setTitle(e.target.value)}
+                            onChange={(e) => {
+                                console.log('Title changed:', e.target.value);
+                                setTitle(e.target.value);
+                            }}
                             placeholder="Enter your note title"
                             className="rounded-md border-gray-300 focus:ring-blue-500 focus:border-blue-500"
                         />
@@ -84,7 +95,10 @@ export const NoteForm: React.FC = () => {
                         <label className="block text-sm font-medium text-gray-600 mb-1">Content</label>
                         <Textarea
                             value={content}
-                            onChange={(e) => setContent(e.target.value)}
+                            onChange={(e) => {
+                                console.log('Content changed:', e.target.value);
+                                setContent(e.target.value);
+                            }}
                             placeholder="Write your note content"
                             className="rounded-md border-gray-300 focus:ring-blue-500 focus:border-blue-500"
                         />

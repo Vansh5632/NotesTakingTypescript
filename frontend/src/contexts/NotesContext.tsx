@@ -1,16 +1,18 @@
 import { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
-import axios from 'axios';
-import { NotesState, Note } from '@/types/notes.types';
+import Cookies from 'universal-cookie';
+import { Note } from '@/types/notes.types';
+import { NotesState } from '@/types/notes.types';
 
 const API_URL = "http://localhost:3000/api";
 
 interface NotesContextType extends NotesState {
-    fetchNotes: () => void;
-    addNote: (note: Omit<Note, 'id' | 'createdAt'>) => void;
-    updateNote: (note: Note) => void;
-    deleteNote: (id: string) => void;
-    setCurrentNote: (note: Note) => void;
+    fetchNotes: () => Promise<void>;
+    addNote: (note: Pick<Note, 'title' | 'content'>) => Promise<void>;
+    updateNote: (note: Note) => Promise<void>;
+    deleteNote: (id: string) => Promise<void>;
+    setCurrentNote: (note: Note | null) => void;
     setIsEditing: (isEditing: boolean) => void;
+    clearError: () => void;
 }
 
 type NotesAction =
@@ -21,7 +23,8 @@ type NotesAction =
     | { type: 'DELETE_NOTE'; payload: string }
     | { type: 'SET_CURRENT_NOTE'; payload: Note | null }
     | { type: 'SET_IS_EDITING'; payload: boolean }
-    | { type: 'SET_ERROR'; payload: string };
+    | { type: 'SET_ERROR'; payload: string }
+    | { type: 'CLEAR_ERROR' };
 
 const initialState: NotesState = {
     notes: [],
@@ -34,20 +37,31 @@ const initialState: NotesState = {
 const notesReducer = (state: NotesState, action: NotesAction): NotesState => {
     switch (action.type) {
         case 'SET_LOADING':
-            return { ...state, isLoading: true };
+            return { ...state, isLoading: true, error: null };
         case 'SET_NOTES':
-            return { ...state, notes: action.payload, isLoading: false };
+            return { ...state, notes: action.payload, isLoading: false, error: null };
         case 'ADD_NOTE':
-            return { ...state, notes: [action.payload, ...state.notes] };
+            return { 
+                ...state, 
+                notes: [action.payload, ...state.notes],
+                error: null,
+                isLoading: false 
+            };
         case 'UPDATE_NOTE':
             return {
                 ...state,
-                notes: state.notes.map((note) => (note.id === action.payload.id ? action.payload : note)),
+                notes: state.notes.map((note) => 
+                    note.id === action.payload.id ? action.payload : note
+                ),
+                error: null,
+                isLoading: false
             };
         case 'DELETE_NOTE':
             return {
                 ...state,
                 notes: state.notes.filter((note) => note.id !== action.payload),
+                error: null,
+                isLoading: false
             };
         case 'SET_CURRENT_NOTE':
             return { ...state, currentNote: action.payload };
@@ -55,6 +69,8 @@ const notesReducer = (state: NotesState, action: NotesAction): NotesState => {
             return { ...state, isEditing: action.payload };
         case 'SET_ERROR':
             return { ...state, error: action.payload, isLoading: false };
+        case 'CLEAR_ERROR':
+            return { ...state, error: null };
         default:
             return state;
     }
@@ -65,77 +81,109 @@ const NotesContext = createContext<NotesContextType | undefined>(undefined);
 export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [state, dispatch] = useReducer(notesReducer, initialState);
 
-    // Fetch all notes
+    const handleApiError = (error: unknown) => {
+        console.error('API Error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+        dispatch({ type: 'SET_ERROR', payload: errorMessage });
+    };
+
     const fetchNotes = useCallback(async () => {
         dispatch({ type: 'SET_LOADING' });
         try {
-            const response = await axios.get<Note[]>(`${API_URL}/notes`);
-            // Ensure the response data is an array
-            const notesData = Array.isArray(response.data) ? response.data : [];
-            dispatch({ type: 'SET_NOTES', payload: notesData });
+            const response = await fetch(`${API_URL}/notes`, {
+                method: 'GET',
+                credentials: 'include', // Include cookies in requests
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Failed to fetch notes: ${response.statusText}`);
+            }
+            
+            const notes: Note[] = await response.json();
+            dispatch({ type: 'SET_NOTES', payload: notes });
         } catch (error) {
-            console.error('Error fetching notes:', error);
-            dispatch({ type: 'SET_NOTES', payload: [] }); // Set empty array on error
-            dispatch({ type: 'SET_ERROR', payload: 'Failed to fetch notes' });
+            handleApiError(error);
         }
     }, []);
 
-    // Add a note
-    const addNote = useCallback(async (note: Omit<Note, 'id' | 'createdAt'>) => {
+    const addNote = useCallback(async (noteData: Pick<Note, 'title' | 'content'>) => {
+        dispatch({ type: 'SET_LOADING' });
         try {
-            const response = await axios.post(`${API_URL}/notes`, note);
-            dispatch({ type: 'ADD_NOTE', payload: response.data });
+            const response = await fetch(`${API_URL}/notes`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(noteData),
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to add note: ${response.statusText}`);
+            }
+
+            const newNote: Note = await response.json();
+            dispatch({ type: 'ADD_NOTE', payload: newNote });
         } catch (error) {
-            dispatch({ type: 'SET_ERROR', payload: 'Failed to add note' });
+            handleApiError(error);
         }
     }, []);
 
-    // Update a note
     const updateNote = useCallback(async (note: Note) => {
+        dispatch({ type: 'SET_LOADING' });
         try {
-            const response = await axios.put(`${API_URL}/notes/${note.id}`, note);
-            dispatch({ type: 'UPDATE_NOTE', payload: response.data });
+            const response = await fetch(`${API_URL}/notes/${note.id}`, {
+                method: 'PUT',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(note),
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to update note: ${response.statusText}`);
+            }
+
+            const updatedNote: Note = await response.json();
+            dispatch({ type: 'UPDATE_NOTE', payload: updatedNote });
         } catch (error) {
-            dispatch({ type: 'SET_ERROR', payload: 'Failed to update note' });
+            handleApiError(error);
         }
     }, []);
 
-    // Delete a note
     const deleteNote = useCallback(async (id: string) => {
+        dispatch({ type: 'SET_LOADING' });
         try {
-            await axios.delete(`${API_URL}/notes/${id}`);
+            const response = await fetch(`${API_URL}/notes/${id}`, {
+                method: 'DELETE',
+                credentials: 'include',
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to delete note: ${response.statusText}`);
+            }
+
             dispatch({ type: 'DELETE_NOTE', payload: id });
         } catch (error) {
-            dispatch({ type: 'SET_ERROR', payload: 'Failed to delete note' });
+            handleApiError(error);
         }
-    }, []);
-
-    // Set current note
-    const setCurrentNote = useCallback((note: Note) => {
-        dispatch({ type: 'SET_CURRENT_NOTE', payload: note });
-    }, []);
-
-    // Set editing mode
-    const setIsEditing = useCallback((isEditing: boolean) => {
-        dispatch({ type: 'SET_IS_EDITING', payload: isEditing });
     }, []);
 
     useEffect(() => {
-        fetchNotes();
+        fetchNotes().catch(console.error);
     }, [fetchNotes]);
 
+    const value = {
+        ...state,
+        fetchNotes,
+        addNote,
+        updateNote,
+        deleteNote,
+    };
+
     return (
-        <NotesContext.Provider
-            value={{
-                ...state,
-                fetchNotes,
-                addNote,
-                updateNote,
-                deleteNote,
-                setCurrentNote,
-                setIsEditing,
-            }}
-        >
+        <NotesContext.Provider value={value}>
             {children}
         </NotesContext.Provider>
     );
@@ -143,7 +191,7 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
 export const useNotes = () => {
     const context = useContext(NotesContext);
-    if (!context) {
+    if (context === undefined) {
         throw new Error('useNotes must be used within NotesProvider');
     }
     return context;
