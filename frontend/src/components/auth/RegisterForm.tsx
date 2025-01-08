@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, Eye, EyeOff, Lock, Mail, Check, X } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const RegisterForm = () => {
   const [email, setEmail] = useState("");
@@ -14,7 +15,7 @@ export const RegisterForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [focusedField, setFocusedField] = useState("");
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e:React.FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
       setPasswordError("Passwords do not match");
@@ -22,7 +23,7 @@ export const RegisterForm = () => {
     }
     setPasswordError("");
     // Simulate loading for demo
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await register(email, password);
   };
 
   const checkPasswordStrength = (password) => {

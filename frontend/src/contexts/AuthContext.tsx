@@ -11,6 +11,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  // Initialize authentication
   useEffect(() => {
     const initAuth = async () => {
       const token = localStorage.getItem('token');
@@ -28,6 +29,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initAuth();
   }, []);
 
+  // Login method
   const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
     setError(null);
@@ -43,23 +45,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [navigate]);
 
+  // Logout method
   const logout = useCallback(async () => {
     await authService.logout();
     setUser(null);
     navigate('/login');
   }, [navigate]);
 
+  // Register method
+  const register = useCallback(async (email: string, password: string, name: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const user = await authService.register(email, password, name);
+      setUser(user);
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [navigate]);
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading, error }}>
+    <AuthContext.Provider value={{ user, login, logout, register, isLoading, error }}>
       {!isLoading && children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = ()=>{
-    const context = useContext(AuthContext);
-    if(!context){
-        throw new Error('useAuth must be used within AuthProvider');
-    }
-    return context;
-}
+// Custom Hook for AuthContext
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
+  return context;
+};
