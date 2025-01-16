@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Loader2, Eye, EyeOff, Lock, Mail, Check, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
+
 export const RegisterForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
