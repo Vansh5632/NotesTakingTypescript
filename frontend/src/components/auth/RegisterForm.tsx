@@ -1,25 +1,54 @@
-import React, { useState } from "react";
+import React, { useState, FormEvent, ChangeEvent } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Eye, EyeOff, Lock, Mail, Check, X, User } from "lucide-react";
 
-const RegisterForm = () => {
-  const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordError, setPasswordError] = useState("");
-  const [passwordStrength, setPasswordStrength] = useState({ 
+interface PasswordStrengthCondition {
+  met: boolean;
+  label: string;
+}
+
+interface PasswordStrength {
+  label: string;
+  color: string;
+}
+
+interface PasswordStrengthResult {
+  conditions: PasswordStrengthCondition[];
+  strength: PasswordStrength;
+}
+
+interface FormData {
+  email: string;
+  username: string;
+  password: string;
+  confirmPassword: string;
+}
+
+interface FormErrors {
+  password?: string;
+}
+
+const RegisterForm: React.FC = () => {
+  const [formData, setFormData] = useState<FormData>({
+    email: "",
+    username: "",
+    password: "",
+    confirmPassword: "",
+  });
+
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [passwordStrength, setPasswordStrength] = useState<PasswordStrengthResult>({ 
     conditions: [],
     strength: { label: "", color: "" }
   });
-  const [showPassword, setShowPassword] = useState(false);
-  const [focusedField, setFocusedField] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [focusedField, setFocusedField] = useState<keyof FormData | "">("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const checkPasswordStrength = (password) => {
-    const conditions = [
+  const checkPasswordStrength = (password: string): PasswordStrengthResult => {
+    const conditions: PasswordStrengthCondition[] = [
       { met: password.length >= 8, label: "8+ characters" },
       { met: /[A-Z]/.test(password), label: "Uppercase letter" },
       { met: /\d/.test(password), label: "Number" },
@@ -41,27 +70,49 @@ const RegisterForm = () => {
     };
   };
 
-  const handlePasswordChange = (value) => {
-    setPassword(value);
-    setPasswordStrength(checkPasswordStrength(value));
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>): void => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+
+    if (name === 'password') {
+      setPasswordStrength(checkPasswordStrength(value));
+    }
   };
 
-  const handleSubmit = async (e) => {
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.password = "Passwords do not match";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-      setPasswordError("Passwords do not match");
+    
+    if (!validateForm()) {
       return;
     }
-    setPasswordError("");
+
     setIsLoading(true);
     
-    // Simulate API call
     try {
       await new Promise(resolve => setTimeout(resolve, 1500));
-      console.log("Registration successful!", { email, username, password });
+      console.log("Registration successful!", {
+        email: formData.email,
+        username: formData.username,
+        password: formData.password
+      });
       // Here you would typically call your registration function
     } catch (error) {
-      setPasswordError("Registration failed. Please try again.");
+      setErrors({ password: "Registration failed. Please try again." });
+      console.log(error);
     } finally {
       setIsLoading(false);
     }
@@ -113,9 +164,10 @@ const RegisterForm = () => {
                       }`} />
                       <Input
                         type="text"
+                        name="username"
                         placeholder="Username"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
+                        value={formData.username}
+                        onChange={handleInputChange}
                         onFocus={() => setFocusedField("username")}
                         onBlur={() => setFocusedField("")}
                         className="pl-10 py-6 border-2 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
@@ -134,9 +186,10 @@ const RegisterForm = () => {
                       }`} />
                       <Input
                         type="email"
+                        name="email"
                         placeholder="Email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        value={formData.email}
+                        onChange={handleInputChange}
                         onFocus={() => setFocusedField("email")}
                         onBlur={() => setFocusedField("")}
                         className="pl-10 py-6 border-2 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
@@ -155,9 +208,10 @@ const RegisterForm = () => {
                       }`} />
                       <Input
                         type={showPassword ? "text" : "password"}
+                        name="password"
                         placeholder="Password"
-                        value={password}
-                        onChange={(e) => handlePasswordChange(e.target.value)}
+                        value={formData.password}
+                        onChange={handleInputChange}
                         onFocus={() => setFocusedField("password")}
                         onBlur={() => setFocusedField("")}
                         className="pl-10 pr-10 py-6 border-2 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
@@ -173,7 +227,7 @@ const RegisterForm = () => {
                     </div>
 
                     {/* Password Strength Indicator */}
-                    {password && (
+                    {formData.password && (
                       <div className="space-y-3">
                         <div className="flex items-center space-x-2">
                           <div className={`h-2 flex-1 rounded-full bg-gray-200`}>
@@ -230,17 +284,18 @@ const RegisterForm = () => {
                       }`} />
                       <Input
                         type={showPassword ? "text" : "password"}
+                        name="confirmPassword"
                         placeholder="Confirm Password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        value={formData.confirmPassword}
+                        onChange={handleInputChange}
                         onFocus={() => setFocusedField("confirmPassword")}
                         onBlur={() => setFocusedField("")}
                         className="pl-10 py-6 border-2 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
                         required
                       />
                     </div>
-                    {passwordError && (
-                      <p className="text-sm text-red-500 mt-1">{passwordError}</p>
+                    {errors.password && (
+                      <p className="text-sm text-red-500 mt-1">{errors.password}</p>
                     )}
                   </div>
 

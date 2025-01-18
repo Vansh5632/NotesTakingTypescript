@@ -1,140 +1,65 @@
-import { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Plus, Save, X } from "lucide-react";
-import { useNotes } from "@/contexts/NotesContext";
-import { useAuth } from "@/contexts/AuthContext";
-import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { useNotes } from '@/contexts/NotesContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Loader2 } from 'lucide-react';
 
 export const NoteForm: React.FC = () => {
-    const [title, setTitle] = useState('');
-    const [content, setContent] = useState('');
-    const { user } = useAuth();
+  const { addNote, currentNote, updateNote, setCurrentNote, setIsEditing, isLoading } = useNotes();
+  const [title, setTitle] = useState(currentNote?.title || '');
+  const [content, setContent] = useState(currentNote?.content || '');
 
-    const { addNote, currentNote, updateNote, isEditing, setIsEditing, setCurrentNote } = useNotes();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!title.trim() || !content.trim()) return;
 
-    useEffect(() => {
-        if (currentNote && isEditing) {
-            console.log('Editing note:', currentNote);
-            setTitle(currentNote.title);
-            setContent(currentNote.content);
-        }
-    }, [currentNote, isEditing]);
-
-    const handleSubmit = () => {
-        if (!user) {
-            console.log('No user found');
-            return;
-        }
-
-        if (isEditing && currentNote) {
-            console.log('Updating note:', currentNote);
-            updateNote({
-                ...currentNote,
-                title,
-                content,
-            });
-        } else {
-            console.log('Adding new note');
-            addNote({
-                title,
-                content,
-                userId: user.id
-            });
-        }
-
-        console.log('Resetting form');
-        setTitle('');
-        setContent('');
-        setIsEditing(false);
+    try {
+      if (currentNote) {
+        await updateNote({ ...currentNote, title, content });
         setCurrentNote(null);
-    };
-
-    const handleCancel = () => {
-        console.log('Cancelling edit');
         setIsEditing(false);
-        setCurrentNote(null);
-        setTitle('');
-        setContent('');
-    };
+      } else {
+        await addNote({ title, content });
+      }
+      setTitle('');
+      setContent('');
+    } catch (error) {
+      console.error('Failed to save note:', error);
+    }
+  };
 
-    return (
-        <motion.div 
-            initial={{ opacity: 0, y: -10 }} 
-            animate={{ opacity: 1, y: 0 }} 
-            transition={{ duration: 0.5, ease: "easeInOut" }}
-        >
-            <Card className='mb-6 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 bg-gradient-to-br from-white to-gray-50 border border-gray-200'>
-                {/* Header */}
-                <CardHeader className="bg-gradient-to-r from-blue-500 to-teal-500 text-white rounded-t-xl p-4">
-                    <CardTitle className="text-lg font-bold tracking-wide">
-                        {isEditing ? 'Edit Note' : 'Add Note'}
-                    </CardTitle>
-                </CardHeader>
-
-                {/* Content */}
-                <CardContent className="p-6 space-y-6">
-                    {/* Title Input */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1">Title</label>
-                        <Input
-                            value={title}
-                            onChange={(e) => {
-                                console.log('Title changed:', e.target.value);
-                                setTitle(e.target.value);
-                            }}
-                            placeholder="Enter your note title"
-                            className="rounded-md border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                        />
-                    </div>
-
-                    {/* Content Textarea */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1">Content</label>
-                        <Textarea
-                            value={content}
-                            onChange={(e) => {
-                                console.log('Content changed:', e.target.value);
-                                setContent(e.target.value);
-                            }}
-                            placeholder="Write your note content"
-                            className="rounded-md border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                        />
-                    </div>
-
-                    {/* Buttons */}
-                    <div className='flex gap-4'>
-                        <Button 
-                            onClick={handleSubmit} 
-                            className='flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-md transition-all'
-                            disabled={!title || !content}
-                        >
-                            {isEditing ? (
-                                <>
-                                    <Save className='mr-2 h-4 w-4' />
-                                    Update Note
-                                </>
-                            ) : (
-                                <>
-                                    <Plus className='mr-2 h-4 w-4' />
-                                    Add Note
-                                </>
-                            )}
-                        </Button>
-                        {isEditing && (
-                            <Button 
-                                onClick={handleCancel} 
-                                className='flex-1 bg-red-500 hover:bg-red-600 text-white rounded-md shadow-md transition-all'
-                            >
-                                <X className='mr-2 h-4 w-4' />
-                                Cancel
-                            </Button>
-                        )}
-                    </div>
-                </CardContent>
-            </Card>
-        </motion.div>
-    );
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <Input
+        placeholder="Note Title"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        className="w-full"
+        disabled={isLoading}
+      />
+      <Textarea
+        placeholder="Write your note here..."
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        className="w-full min-h-32"
+        disabled={isLoading}
+      />
+      <Button 
+        type="submit" 
+        disabled={isLoading || !title.trim() || !content.trim()}
+        className="w-full"
+      >
+        {isLoading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Saving...
+          </>
+        ) : (
+          currentNote ? 'Update Note' : 'Create Note'
+        )}
+      </Button>
+    </form>
+  );
 };

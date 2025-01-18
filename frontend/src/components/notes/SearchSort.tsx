@@ -1,7 +1,6 @@
 import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
 import { Search,SortAsc } from "lucide-react";
-import { div } from "framer-motion/client";
 
 interface SearchSortProps {
     searchQuery:string;

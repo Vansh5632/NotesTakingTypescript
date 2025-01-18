@@ -9,3 +9,12 @@ export interface AuthState{
     isLoading:boolean;
     error:string|null;
 }
+
+export interface AuthContextType {
+  user: User | null;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  register: (email: string, password: string, name: string) => Promise<void>;
+  isLoading: boolean;
+  error: string | null;
+}

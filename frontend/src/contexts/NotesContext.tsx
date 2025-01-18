@@ -170,6 +170,17 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
     }, []);
 
+    const setCurrentNote = (note: Note | null) => {
+        dispatch({ type: 'SET_CURRENT_NOTE', payload: note });
+    }
+    const setIsEditing = (isEditing: boolean) => {
+        dispatch({ type: 'SET_IS_EDITING', payload: isEditing });
+    }
+    const clearError = () => {
+        dispatch({ type: 'CLEAR_ERROR' });
+    }
+    
+
     useEffect(() => {
         fetchNotes().catch(console.error);
     }, [fetchNotes]);
@@ -180,6 +191,9 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         addNote,
         updateNote,
         deleteNote,
+        setCurrentNote,
+        setIsEditing,
+        clearError,
     };
 
     return (

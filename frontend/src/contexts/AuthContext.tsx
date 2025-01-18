@@ -1,7 +1,10 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { User } from '../types/auth.types';
+import { User ,AuthContextType} from '../types/auth.types';
+
+
 import { authService } from '../services/auth.service';
 import { useNavigate } from 'react-router-dom';
+
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -21,6 +24,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(user);
         } catch (error) {
           localStorage.removeItem('token');
+          console.log(error);
         }
       }
       setIsLoading(false);

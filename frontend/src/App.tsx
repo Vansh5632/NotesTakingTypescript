@@ -16,9 +16,9 @@ const App = () => {
           <Route
             path="/dashboard"
             element={
-              <RequireAuth>
+  
                 <HomePage />
-              </RequireAuth>
+              
             }
           />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
