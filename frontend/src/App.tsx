@@ -1,10 +1,10 @@
 // src/App.tsx
 import React from "react";
-import {Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { NotesProvider } from "./contexts/NotesContext";
 import { LoginForm } from "./components/auth/LoginForm";
-import  RegisterForm  from "./components/auth/RegisterForm";
+import RegisterForm from "./components/auth/RegisterForm";
 import HomePage from "./components/HomePage";
 import { useAuth } from "./contexts/AuthContext";
 const App = () => {
@@ -16,9 +16,9 @@ const App = () => {
           <Route
             path="/dashboard"
             element={
-  
+              <RequireAuth>
                 <HomePage />
-              
+              </RequireAuth>
             }
           />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
