@@ -2,20 +2,33 @@ const API_URL = 'http://localhost:3000/api';
 
 export const authService = {
     async login(email: string, password: string) {
-        const response = await fetch(`${API_URL}/users/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password }),
-            credentials: 'include', // Ensures cookies are sent/received
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to login');
+        try {
+            const response = await fetch(`${API_URL}/users/login`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+                credentials: 'include', // For cookies
+            });
+    
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to login');
+            }
+    
+            const data = await response.json();
+            
+            // Store the token if it's returned in the response
+            if (data.token) {
+                localStorage.setItem('token', data.token);
+            }
+            
+            return data.user;
+        } catch (error) {
+            console.error('Login error:', error);
+            throw error;
         }
-
-        const data = await response.json();
-        return data.user; // Backend returns { user: createUserResponse(user) }
     },
 
     async logout() {

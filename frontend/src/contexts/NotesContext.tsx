@@ -1,5 +1,5 @@
 import { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
-import Cookies from 'universal-cookie';
+
 import { Note } from '@/types/notes.types';
 import { NotesState } from '@/types/notes.types';
 
