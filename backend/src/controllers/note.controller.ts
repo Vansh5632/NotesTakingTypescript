@@ -60,6 +60,7 @@ export const deleteNote = async (req: AuthRequest, res: Response) => {
     
     res.json({ message: 'Note deleted' });
   } catch (error) {
+    console.error(error);  // Log error for debugging
     res.status(500).json({ error: 'Error deleting note' });
   }
 };
