@@ -14,6 +14,7 @@ export interface IUser {
 
 
 export interface INote {
+    noteId: number;
     title: string;
     content: string;
     userId: string;
